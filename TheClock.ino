@@ -9,6 +9,11 @@
 
 #define NUM_LEDS 8
 #define PIN 9
+#define RightButtonPin 3
+#define RightButtonLEDPin 4
+#define LeftButtonPin 5
+#define LeftButtonLEDPin 6 
+
 RTC_DS3231 rtc;
 Adafruit_7segment matrix = Adafruit_7segment();
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
