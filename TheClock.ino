@@ -9,10 +9,10 @@
 
 #define NUM_LEDS 8
 #define PIN 9
-#define RightButtonPin 3
-#define RightButtonLEDPin 4
-#define LeftButtonPin 5
-#define LeftButtonLEDPin 6 
+#define LeftButtonPin 3
+#define LeftButtonLEDPin 4
+#define RightButtonPin 5
+#define RightButtonLEDPin 6 
 
 RTC_DS3231 rtc;
 Adafruit_7segment matrix = Adafruit_7segment();
@@ -25,23 +25,79 @@ String s_hour;
 String s_minute;
 String s_nowTime;
 int nowTime;
-bool ColonOn;
+bool ColonOn = true;
+int RightLEDState = HIGH;
+int RightButtonState;
+int LastRightButtonState = LOW;
+int LeftLEDState;
+int LeftButtonState;
+int LastLeftButtonState = LOW;
+unsigned long ColonFlashTime = 1000;
+unsigned long LastColonFlashTime = 0;
+unsigned long RightLastDebounceTime = 0;
+unsigned long RightDebounceDelay = 50;
+unsigned long LeftLastDebounceTime = 0;
+unsigned long LeftDebounceDelay = 50;
 
 void setup() {
   // starts the LEDs
   strip.begin();
-  strip.show(); 
+  strip.show();
+   
   //starts I2C 
   Wire.begin();
+  
   //starts the clock display
   matrix.begin(0x70);
+  
   //sets the time on the clock
   if (rtc.lostPower()){
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-  }  
+  }
+  //intialize the pins for the Pushbuttons and Pushbutton LEDs
+  pinMode(RightButtonPin, INPUT);
+  pinMode(LeftButtonPin, INPUT);
+  pinMode(RightButtonLEDPin, OUTPUT);
+  pinMode(LeftButtonLEDPin, OUTPUT);
+  digitalWrite(RightButtonLEDPin, RightLEDState);
 }
 
 void loop() {
+  // put your main code here, to run repeatedly:
+  // Button Debouncing
+  int RightButtonReading = digitalRead(RightButtonPin);
+  int LeftButtonReading = digitalRead(LeftButtonPin);
+  
+  if (RightButtonReading != LastRightButtonState){
+    RightLastDebounceTime = millis();
+  }
+
+  if (LeftButtonReading != LastLeftButtonState){
+    LeftLastDebounceTime = millis();
+  }
+
+  if ((millis() - RightLastDebounceTime) > RightDebounceDelay){
+    if (RightButtonReading != RightButtonState){
+      RightButtonState = RightButtonReading;
+      if (RightButtonState == HIGH)
+        RightLEDState = !RightLEDState;
+    }
+  }
+
+  if ((millis() - LeftLastDebounceTime) > LeftDebounceDelay){
+    if (LeftButtonReading != LeftButtonState){
+      LeftButtonState = LeftButtonReading;
+      if (LeftButtonState == HIGH)
+        LeftLEDState = !LeftLEDState;
+    }
+  }
+  
+  digitalWrite(RightButtonLEDPin, RightLEDState);
+  LastRightButtonState = RightButtonReading;
+
+  digitalWrite(LeftButtonLEDPin, LeftLEDState);
+  LastLeftButtonState = LeftButtonReading;
+  
   DateTime now = rtc.now();
 
   hour = now.hour();
@@ -60,19 +116,17 @@ void loop() {
   s_nowTime = s_hour + s_minute;
   nowTime = s_nowTime.toInt();
   matrix.print(nowTime, DEC);
-  if (ColonOn == false){
-    matrix.drawColon(true);
-    ColonOn = true;
+  
+  //This blinks the Colon in the middle of the Clock every second
+
+  LastColonFlashTime = millis();
+  if ((millis() - LastColonFlashTime) > ColonFlashTime){
+    ColonOn != ColonOn;
   }
-  else{
-    matrix.drawColon(false);
-    ColonOn = false;
-  }
+  matrix.drawColon(ColonOn);
   matrix.writeDisplay(); 
   
-  colorWipe(strip.Color(255, 0, 0), 10);
-  delay(1000);
-  
+  //colorWipe(strip.Color(255, 0, 0), 10);
   
 }
 
