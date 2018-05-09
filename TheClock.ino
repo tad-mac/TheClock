@@ -25,10 +25,10 @@ String s_hour;
 String s_minute;
 String s_nowTime;
 int nowTime;
-int RightLEDState = HIGH;
+int RightLEDState = LOW;
 int RightButtonState;
 int LastRightButtonState = LOW;
-int LeftLEDState;
+int LeftLEDState = LOW;
 int LeftButtonState;
 int LastLeftButtonState = LOW;
 bool ColonOn = true;
@@ -62,6 +62,7 @@ void setup() {
   pinMode(RightButtonLEDPin, OUTPUT);
   pinMode(LeftButtonLEDPin, OUTPUT);
   digitalWrite(RightButtonLEDPin, RightLEDState);
+  digitalWrite(LeftButtonLEDPin, LeftLEDState);
 }
 
 void loop() {
@@ -99,10 +100,11 @@ void loop() {
 
   digitalWrite(LeftButtonLEDPin, LeftLEDState);
   LastLeftButtonState = LeftButtonReading;
-  
-  DateTime now = rtc.now();
 
+  // Taking the time from the DS3231 RTC Chip
+  DateTime now = rtc.now();
   hour = now.hour();
+    // displaying 12 hour time
   if (hour == 0){
     hour = hour + 1;  
   }
@@ -110,6 +112,9 @@ void loop() {
     hour = hour - 12;
   }
   minute = now.minute();
+    // converting time in to a string because the minute 
+    // and the hour are seperated and does not show up 
+    // properly on the screen if not put together back into an INT
   s_hour = String(hour);
   s_minute = String (minute, DEC);
   if (minute <= 9){
@@ -119,7 +124,7 @@ void loop() {
   nowTime = s_nowTime.toInt();
   
   
-  //This blinks the Colon in the middle of the Clock every second
+  //Blink the Colon Every Second
   CurrentColonFlashTime = millis();
   if (CurrentColonFlashTime - LastColonFlashTime >= ColonFlashTime){
     LastColonFlashTime = CurrentColonFlashTime;
@@ -132,19 +137,29 @@ void loop() {
     
     matrix.print(nowTime, DEC);
     matrix.drawColon(ColonOn);
+    if (now.hour() >= 21){
+      matrix.setBrightness(0);
+    }
+    else if (now.hour() <= 7){
+      matrix.setBrightness(0);  
+    }
+    else{
+      matrix.setBrightness(15);
+    }
   }
+  //setting screen brightness to dim after 10
+  
   matrix.writeDisplay();
   
   
-  //colorWipe(strip.Color(255, 0, 0), 10);
+  //colorWipe(strip.Color(255, 0, 0));
 
 }
 
 // Fill the dots one after the other with a color
-void colorWipe(uint32_t c, uint8_t wait) {
+void colorWipe(uint32_t c) {
   for(uint16_t i=0; i<strip.numPixels(); i++) {
     strip.setPixelColor(i, c);
     strip.show();
-    delay(wait);
   }
 }
