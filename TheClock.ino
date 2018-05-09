@@ -32,7 +32,7 @@ int LastRightButtonState = LOW;
 int LeftLEDState;
 int LeftButtonState;
 int LastLeftButtonState = LOW;
-unsigned long ColonFlashTime = 1000;
+int ColonFlashTime = 10000;
 unsigned long LastColonFlashTime = 0;
 unsigned long RightLastDebounceTime = 0;
 unsigned long RightDebounceDelay = 50;
@@ -119,11 +119,15 @@ void loop() {
   
   //This blinks the Colon in the middle of the Clock every second
 
-  LastColonFlashTime = millis();
-  if ((millis() - LastColonFlashTime) > ColonFlashTime){
-    ColonOn != ColonOn;
+  if (millis() > (LastColonFlashTime + ColonFlashTime)){
+    LastColonFlashTime = millis();
+    matrix.drawColon(false);
   }
-  matrix.drawColon(ColonOn);
+
+  else {
+    matrix.drawColon(true);
+  }
+  
   matrix.writeDisplay(); 
   
   //colorWipe(strip.Color(255, 0, 0), 10);
