@@ -25,21 +25,23 @@ String s_hour;
 String s_minute;
 String s_nowTime;
 int nowTime;
-bool ColonOn = true;
 int RightLEDState = HIGH;
 int RightButtonState;
 int LastRightButtonState = LOW;
 int LeftLEDState;
 int LeftButtonState;
 int LastLeftButtonState = LOW;
-int ColonFlashTime = 10000;
+bool ColonOn = true;
+const long ColonFlashTime = 1000;
 unsigned long LastColonFlashTime = 0;
 unsigned long RightLastDebounceTime = 0;
 unsigned long RightDebounceDelay = 50;
 unsigned long LeftLastDebounceTime = 0;
 unsigned long LeftDebounceDelay = 50;
+unsigned long CurrentColonFlashTime = 0;
 
 void setup() {
+  Serial.begin(9600);
   // starts the LEDs
   strip.begin();
   strip.show();
@@ -63,7 +65,7 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  
   // Button Debouncing
   int RightButtonReading = digitalRead(RightButtonPin);
   int LeftButtonReading = digitalRead(LeftButtonPin);
@@ -115,23 +117,27 @@ void loop() {
   }
   s_nowTime = s_hour + s_minute;
   nowTime = s_nowTime.toInt();
-  matrix.print(nowTime, DEC);
+  
   
   //This blinks the Colon in the middle of the Clock every second
-
-  if (millis() > (LastColonFlashTime + ColonFlashTime)){
-    LastColonFlashTime = millis();
-    matrix.drawColon(false);
+  CurrentColonFlashTime = millis();
+  if (CurrentColonFlashTime - LastColonFlashTime >= ColonFlashTime){
+    LastColonFlashTime = CurrentColonFlashTime;
+    if (ColonOn == false){
+      ColonOn = true;
+    }
+    else {
+      ColonOn = false;
+    }
+    
+    matrix.print(nowTime, DEC);
+    matrix.drawColon(ColonOn);
   }
-
-  else {
-    matrix.drawColon(true);
-  }
+  matrix.writeDisplay();
   
-  matrix.writeDisplay(); 
   
   //colorWipe(strip.Color(255, 0, 0), 10);
-  
+
 }
 
 // Fill the dots one after the other with a color
